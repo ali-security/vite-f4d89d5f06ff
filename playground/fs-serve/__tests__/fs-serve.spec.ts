@@ -13,6 +13,7 @@ import {
 import type { Page } from 'playwright-chromium'
 import WebSocket from 'ws'
 import testJSON from '../safe.json'
+import { getWindows83ShortNameForDotEnv } from '../root/windows83Filename'
 import {
   browser,
   isServe,
@@ -202,6 +203,30 @@ describe.runIf(isServe)('main', () => {
       await page.textContent('.unsafe-dotenv-query-dot-svg-wasm-init'),
     ).toBe('403')
   })
+
+  test('denied .env with NTFS ADS suffix', async () => {
+    // It is 403 on NTFS, 404 on others
+    await expect
+      .poll(() => page.textContent('.unsafe-dotenv-ntfs-ads'))
+      .toMatch(/^40[34]$/)
+  })
+
+  test('denied .env with NTFS ADS suffix and ?raw', async () => {
+    // It is 403 on NTFS, 404 on others
+    await expect
+      .poll(() => page.textContent('.unsafe-dotenv-ntfs-ads-raw'))
+      .toMatch(/^40[34]$/)
+  })
+
+  const dotEnvWindows83ShortName = getWindows83ShortNameForDotEnv()
+  test.skipIf(dotEnvWindows83ShortName === undefined)(
+    'denied .env with 8.3 short name',
+    async () => {
+      await expect
+        .poll(() => page.textContent('.unsafe-dotenv-83-short-name'))
+        .toBe('403')
+    },
+  )
 })
 
 describe('fetch', () => {
